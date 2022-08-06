@@ -61,6 +61,14 @@ def main(dir_key):
 			Files = get_files(True, True)
 			our_key = get_key(True, dir_key)
 			encrypt(True, Files, our_key)
+		elif parametro == "-version" or parametro == "-v" and len_parametros == 2:
+			print(Fore.LIGHTBLUE_EX+banner)
+			print(Fore.YELLOW+version)
+			quit()
+		elif parametro == "-help" or parametro == "-h" and len_parametros == 2:
+			print(Fore.LIGHTBLUE_EX+banner)
+			print(Fore.YELLOW+help_msm)
+			quit()
 		else:
 			secret_key = get_key(False, dir_key)
 			menu_parametros(parametro, secret_key, 2)
@@ -74,15 +82,7 @@ def main(dir_key):
 
 
 def menu_parametros(parametro, key, len_p):
-	if parametro == "-version" or parametro == "-v" and len_p == 2:
-		print(Fore.LIGHTBLUE_EX+banner)
-		print(Fore.YELLOW+version)
-		quit()
-	elif parametro == "-help" or parametro == "-h" and len_p == 2:
-		print(Fore.LIGHTBLUE_EX+banner)
-		print(Fore.YELLOW+help_msm)
-		quit()
-	elif (parametro == "-reverse" or parametro == "-r") and len_p == 3:
+	if (parametro == "-reverse" or parametro == "-r") and len_p == 3:
 		print(Fore.LIGHTBLUE_EX+banner)
 		crypted_files = get_files(False, True)	#??
 		decrypt(crypted_files, key)
@@ -166,25 +166,25 @@ def encrypt(silence, Files, our_key):
 
 
 def decrypt(files, secret_key):
-    files_decrypted = []
-    isit = 1
-    for this_file in files:
-        name_file, ext_file = os.path.splitext(this_file)
-    	real_name, real_ext = os.path.splitext(name_file)
-        if os.path.isfile(this_file) and real_ext in ext_a_encriptar:
-    		if os.path.isfile(this_file) and ext_file == ".ft":
-                    isit = decrypting(this_file, secret_key)
-	    		if isit == 0:
-    				break
-                            else:
-		    		back_file_name = '{}'.format(name_file)
-	    			os.rename(this_file, back_file_name)
-    				files_decrypted.append(back_file_name)
-    if isit != 0:
-        print(Fore.GREEN+"Se han desencriptado los siguientes archivos: ")
-        mostrar(files_decrypted, True)
-    else:
-        print(Fore.RED+"Incorrect key, stop playing")
+	files_decrypted = []
+	isit = 1
+	for this_file in files:
+		name_file, ext_file = os.path.splitext(this_file)
+		real_name, real_ext = os.path.splitext(name_file)
+		if os.path.isfile(this_file) and real_ext in ext_a_encriptar:
+			if os.path.isfile(this_file) and ext_file == ".ft":
+				isit = decrypting(this_file, secret_key)
+				if isit == 0:
+					break
+				else:
+					back_file_name = '{}'.format(name_file)
+					os.rename(this_file, back_file_name)
+					files_decrypted.append(back_file_name)
+	if isit != 0:
+		print(Fore.GREEN+"Se han desencriptado los siguientes archivos: ")
+		mostrar(files_decrypted, True)
+	else:
+		print(Fore.RED+"Incorrect key, stop playing")
 
 def decrypting(this_file, secret_key):
 	try:
