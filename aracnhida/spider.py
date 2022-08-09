@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+import argparse                 #obtenemos argumentos
 import requests                 #sacamos el html de la url
 from bs4 import BeautifulSoup   #ponemos los datos en un formato mas "legible"
-from selenium import webdriver  # ?
+#from selenium import webdriver  # ?
 import io                       #convertimos las imagenes en data binaria
 from PIL import Image           
 import os                       #tener funciones del sistema operativo
@@ -114,6 +115,7 @@ def principal(path, url, parametro, cantidad):
 
     if parametro == True:                       #aqui enviamos a recursividad
         if cantidad == 0:
+            print("recursividad")
             i = 1
             for link in recursive_links:
                 get_url_img(link, path)
@@ -144,42 +146,28 @@ def principal(path, url, parametro, cantidad):
             for img in image_to_down:
                 download_image(path, img, "spider")
 
+def parametros():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', action = 'store_const', const = 'none', help = "en caso de querer hacer recursividad", required = False)
+    parser.add_argument('-l', type = int, help = "cantidad de veces que se quiere hacer -r", required = False)
+    parser.add_argument('-p', type = str, help = "ruta donde se guardaran archivos", required = False)
+    parser.add_argument('url', type = str, action = 'store', help = "<required> url link")
+    args = parser.parse_args()
+    
+    if args.url:
+        if args.url and args.r:
+            if args.p and args.l:
+                principal(args.p, args.url, True, args.l)
+            elif args.p:
+                principal(args.p, args.url, True, 0)
+            elif args.l:
+                principal("./data", args.url, True, args.l)
+            else:
+                principal("./data", args.url, True, 0)
+        elif args.p:
+            principal(args.p, args.url, False, 0)
+        else:
+            principal("./data", args.url, False, 0)
 
-    
 if __name__ == "__main__":
-    args = sys.argv[1:]
-    len_p = len(args)
-    print(len_p)
-    if len_p == 1:
-        url_to_look = args[0]
-        principal("./data", url_to_look, False, 0)
-    elif len_p == 2:
-        if "-r" in args:
-            url_to_look = args[1]
-            principal ("./data", url_to_look, True, 0)
-    elif len_p == 3:
-        if "-p" in args:
-            path = args[1]
-            url = args[2]
-            print(f"path: {path}, url: {url}")
-            principal(path, url, False, 0)
-    elif len_p == 4:
-        if "-r" in args and "-l" in args:
-            cantidad = int(args[2])
-            url = args[3]
-            principal("./data", url, True, cantidad)
-        elif "-r" in args and "-p" in args:
-            path = args[2]
-            url = args[3]
-            print(f"este es el path {path} y la url {url}")
-            principal(path, url, True, 0)
-    elif len_p == 6:
-        if "-r" in args and "-l" in args and "-p" in args:
-            cantidad = int(args[2])
-            path = args[4]
-            url = args[5]
-            print(f"cantidad :{cantidad}, ubi: {path}, url: {url}")
-            principal(path, url, True, cantidad)
-    else:
-        print("Error: Parametros incorrectos")
-    
+    parametros() 
