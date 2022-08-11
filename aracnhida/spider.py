@@ -3,7 +3,7 @@
 import argparse                 #obtenemos argumentos
 import requests                 #sacamos el html de la url
 from bs4 import BeautifulSoup   #ponemos los datos en un formato mas "legible"
-#from selenium import webdriver  # ?
+#from selenium import webdriver #para automatizar el uso de chrome (?)
 import io                       #convertimos las imagenes en data binaria
 from PIL import Image           
 import os                       #tener funciones del sistema operativo
@@ -99,9 +99,14 @@ def make_path(path):
 
     
 def principal(path, url, parametro, cantidad):
-    htmldata = getdata(url)
-    soup = BeautifulSoup(htmldata, 'html.parser')
-    make_path(path)
+    try:
+        htmldata = getdata(url)
+        soup = BeautifulSoup(htmldata, 'html.parser')
+        make_path(path)
+    except Exception as e:
+        print(f"Error: {e}")
+        exit()
+
 
     for item in soup.find_all('a'):
         links_to_look.append(item['href'])
@@ -148,10 +153,10 @@ def principal(path, url, parametro, cantidad):
 
 def parametros():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', action = 'store_const', const = 'none', help = "en caso de querer hacer recursividad", required = False)
-    parser.add_argument('-l', type = int, help = "cantidad de veces que se quiere hacer -r", required = False)
-    parser.add_argument('-p', type = str, help = "ruta donde se guardaran archivos", required = False)
-    parser.add_argument('url', type = str, action = 'store', help = "<required> url link")
+    parser.add_argument('-r', action = 'store_true', help = "recursively downloads the images in different links with the same domain", required = False)
+    parser.add_argument('-l', type = int, help = "how many times do you want to do -r. If it's not defined it will be 5.", required = False)
+    parser.add_argument('-p', type = str, help = "path where you would like to save your images.", required = False)
+    parser.add_argument('url', type = str, action = 'store', help = "<required> link to the website.")
     args = parser.parse_args()
     
     if args.url:
