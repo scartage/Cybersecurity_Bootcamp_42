@@ -3,16 +3,13 @@
 import argparse                 #obtenemos argumentos
 import requests                 #sacamos el html de la url
 from bs4 import BeautifulSoup   #ponemos los datos en un formato mas "legible"
-#from selenium import webdriver #para automatizar el uso de chrome (?)
 import io                       #convertimos las imagenes en data binaria
 from PIL import Image           
 import os                       #tener funciones del sistema operativo
-import sys                      #tomar argumentos por terminal
 from tld import get_fld         #nos permite sacar el dominio
-import re                       #buscar la extension de la url, filtrar url
+#import re                       #buscar la extension de la url, filtrar url
 import time
 
-data = "./data"
 links_to_look = []
 recursive_links = []
 image_url = []
@@ -36,6 +33,11 @@ def download_image(download_path, img, file_name):
            file_path = path_to_down + file_name + str(ts) + ".jpg"
            with open(file_path, "wb") as f:
                f.write(image_content)
+        elif ext == ".jpeg":
+            path_to_down = download_path + "/jpg-jpeg/"
+            file_path = path_to_down + file_name + str(ts) + ".jpeg"
+            with open(file_path, "wb") as f:
+                f.write(image_content)
         elif ext == ".png":
             path_to_down = download_path + "/png/"
             file_path = path_to_down + file_name + str(ts) + ".png"
@@ -70,7 +72,7 @@ def get_url_img(url, path):
     for img in image_url_RE:
         name, ext = os.path.splitext(img)
         if ext in ext_to_download:
-            image_to_down_RE.append(img)         #estas son las imagenes que se descargan por recursividad
+            image_to_down_RE.append(img)
         else:
             continue
     if path == "./data":
@@ -107,27 +109,31 @@ def principal(path, url, parametro, cantidad):
         print(f"Error: {e}")
         exit()
 
+    if parametro == True:
+        try:
+            for item in soup.find_all('a'):
+                links_to_look.append(item['href'])
+        except Exception as e:
+            print(f"FAILED: {e}")
+            exit()
+        
+        dominio = get_fld(url)
+        for link in links_to_look:
+            if dominio in link:
+                recursive_links.append(link)
+            else:
+                continue
 
-    for item in soup.find_all('a'):
-        links_to_look.append(item['href'])
-    
-    dominio = get_fld(url)
-    for link in links_to_look:
-        if dominio in link:
-            recursive_links.append(link)        #links para recursividad (basado en dominio)
-        else:
-            continue
-
-    if parametro == True:                       #aqui enviamos a recursividad
-        if cantidad == 0:
+        if cantidad == 5:
             print("recursividad")
             i = 1
             for link in recursive_links:
                 get_url_img(link, path)
-                if i == 6:
+                if i == 5:
                     break
                 i += 1
         else:
+            print("recursividad")
             i = 1
             for link in recursive_links:
                 if i == cantidad + 1:
@@ -136,7 +142,7 @@ def principal(path, url, parametro, cantidad):
                 i += 1
     else:
         for item in soup.find_all('img'):
-            image_url.append(item['src'])          #esto solo lo hacen el la URL, sin recursividad
+            image_url.append(item['src'])
 
         for img in image_url:
             name, ext = os.path.splitext(img) 
@@ -154,11 +160,11 @@ def principal(path, url, parametro, cantidad):
 def parametros():
     parser = argparse.ArgumentParser()
     parser.add_argument('-r', action = 'store_true', help = "recursively downloads the images in different links with the same domain", required = False)
-    parser.add_argument('-l', type = int, help = "how many times do you want to do -r. If it's not defined it will be 5.", required = False)
-    parser.add_argument('-p', type = str, help = "path where you would like to save your images.", required = False)
+    parser.add_argument('-l', type = int, action = 'store', help = "how many times do you want to do -r (you must use -r with this parameter). If it's not defined it will be 5", default = 5)
+    parser.add_argument('-p', type = str, help = "path where you would like to save your images (same directory)", required = False)
     parser.add_argument('url', type = str, action = 'store', help = "<required> link to the website.")
     args = parser.parse_args()
-    
+
     if args.url:
         if args.url and args.r:
             if args.p and args.l:
@@ -168,7 +174,7 @@ def parametros():
             elif args.l:
                 principal("./data", args.url, True, args.l)
             else:
-                principal("./data", args.url, True, 0)
+                principal("./data", args.url, True, args.l)
         elif args.p:
             principal(args.p, args.url, False, 0)
         else:
