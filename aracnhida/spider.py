@@ -7,9 +7,26 @@ import io                       #convertimos las imagenes en data binaria
 from PIL import Image           
 import os                       #tener funciones del sistema operativo
 from tld import get_fld         #nos permite sacar el dominio
+from urllib.parse import urljoin #para reparar las url rotas
 #import re                       #buscar la extension de la url, filtrar url
 import time
+from colorama import Fore
 
+
+banner = """
+
+  ██████  ██▓███   ██▓▓█████▄ ▓█████  ██▀███  
+▒██    ▒ ▓██░  ██▒▓██▒▒██▀ ██▌▓█   ▀ ▓██ ▒ ██▒
+░ ▓██▄   ▓██░ ██▓▒▒██▒░██   █▌▒███   ▓██ ░▄█ ▒
+  ▒   ██▒▒██▄█▓▒ ▒░██░░▓█▄   ▌▒▓█  ▄ ▒██▀▀█▄  
+▒██████▒▒▒██▒ ░  ░░██░░▒████▓ ░▒████▒░██▓ ▒██▒
+▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▓   ▒▒▓  ▒ ░░ ▒░ ░░ ▒▓ ░▒▓░
+░ ░▒  ░ ░░▒ ░      ▒ ░ ░ ▒  ▒  ░ ░  ░  ░▒ ░ ▒░
+░  ░  ░  ░░        ▒ ░ ░ ░  ░    ░     ░░   ░ 
+      ░            ░     ░       ░  ░   ░     
+                       ░                      
+                                    by scartage
+"""
 links_to_look = []
 recursive_links = []
 image_url = []
@@ -17,9 +34,12 @@ image_to_down = []
 ext_to_download = [".jpg", ".jpeg", ".png", ".gif", ".bmp"]
 
 def getdata(url):
-    r = requests.get(url)
-    print(r)
-    return r.text
+    try:
+        r = requests.get(url)
+        print(Fore.CYAN + f"{r}" + Fore.RESET)  
+        return r.text
+    except Exception as e:
+        print(Fore.YELLOW + f"FAIL: {e}" + Fore.RESET)
 
 def download_image(download_path, img, file_name):
     ts = time.time()
@@ -53,9 +73,9 @@ def download_image(download_path, img, file_name):
             file_path = path_to_down + file_name + str(ts) + ".bmp"
             with open(file_path, "wb") as f:
                f.write(image_content)
-        print(f"Imagen: {img} descargada con exito")
+        print(Fore.GREEN + f"Imagen: {img} descargada con exito" + Fore.RESET)
     except Exception as e:
-        print(f"FAILED: for this reason {e} - ")
+        print(Fore.YELLOW + f"FAILED: for this reason {e}" + Fore.RESET) 
 
 
 def get_url_img(url, path):
@@ -72,9 +92,10 @@ def get_url_img(url, path):
     for img in image_url_RE:
         name, ext = os.path.splitext(img)
         if ext in ext_to_download:
-            image_to_down_RE.append(img)
+            image_to_down_RE.append(urljoin(url,img))
         else:
             continue
+
     if path == "./data":
         for img in image_to_down_RE:
             download_image("./data", img, "spiderRE")
@@ -98,15 +119,13 @@ def make_path(path):
             os.mkdir(path + "/gif/")
             os.mkdir(path + "/bmp/")
 
-
-    
 def principal(path, url, parametro, cantidad):
     try:
         htmldata = getdata(url)
         soup = BeautifulSoup(htmldata, 'html.parser')
         make_path(path)
     except Exception as e:
-        print(f"Error: {e}")
+        print(Fore.RED + f"Error: {e}" + Fore.RESET)
         exit()
 
     if parametro == True:
@@ -114,7 +133,7 @@ def principal(path, url, parametro, cantidad):
             for item in soup.find_all('a'):
                 links_to_look.append(item['href'])
         except Exception as e:
-            print(f"FAILED: {e}")
+            print(Fore.YELLOW + f"FAILED: {e}" + Fore.RESET)  
             exit()
         
         dominio = get_fld(url)
@@ -125,7 +144,7 @@ def principal(path, url, parametro, cantidad):
                 continue
 
         if cantidad == 5:
-            print("recursividad")
+            print(Fore.BLUE + "recursividad" + Fore.RESET)
             i = 1
             for link in recursive_links:
                 get_url_img(link, path)
@@ -133,7 +152,7 @@ def principal(path, url, parametro, cantidad):
                     break
                 i += 1
         else:
-            print("recursividad")
+            print(Fore.BLUE + "recursividad" + Fore.RESET) 
             i = 1
             for link in recursive_links:
                 if i == cantidad + 1:
@@ -141,15 +160,19 @@ def principal(path, url, parametro, cantidad):
                 get_url_img(link, path)
                 i += 1
     else:
-        for item in soup.find_all('img'):
-            image_url.append(item['src'])
+        try:
+            for item in soup.find_all('img'):
+                image_url.append(item['src'])
+        except Exception as e:
+            print(f"Fail: {e}. No es posible descargar imagenes de esta pagina, intenta con otra.")
 
         for img in image_url:
             name, ext = os.path.splitext(img) 
             if ext in ext_to_download:
-                image_to_down.append(img)           
+                image_to_down.append(urljoin(url, img))           
             else:
                 continue
+
         if path == "./data":
             for img in image_to_down:
                 download_image("./data/", img, "spider")
@@ -181,4 +204,5 @@ def parametros():
             principal("./data", args.url, False, 0)
 
 if __name__ == "__main__":
+    print(Fore.LIGHTBLUE_EX + banner + Fore.RESET)
     parametros() 
